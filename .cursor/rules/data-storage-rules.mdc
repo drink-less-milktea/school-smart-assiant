@@ -1,0 +1,449 @@
+---
+description: data store
+globs: 
+alwaysApply: false
+---
+# 校园AI智能助手 - 数据存储规范
+
+## 存储架构设计
+
+### 本地存储方案
+采用轻量级本地存储，避免复杂的数据库配置：
+
+| 存储类型 | 技术方案 | 应用场景 | 文件位置 |
+|---------|----------|----------|----------|
+| **用户配置** | SharedPreferences | 应用设置、用户偏好 | shared_prefs/ |
+| **结构化数据** | JSON + File | 课程信息、学习计划、聊天记录 | files/ |
+| **缓存数据** | Internal Storage | 临时数据、图片缓存 | cache/ |
+| **导出数据** | External Storage | 用户文档、备份文件 | Documents/ |
+
+### 存储工具类设计
+```java
+/**
+ * 统一的存储管理器
+ * 提供JSON序列化和文件操作功能
+ */
+public class StorageManager {
+    private static final String DATA_DIR = "app_data";
+    private Context context;
+    private Gson gson;
+    
+    public StorageManager(Context context) {
+        this.context = context;
+        this.gson = new GsonBuilder()
+                .setDateFormat("yyyy-MM-dd HH:mm:ss")
+                .create();
+    }
+    
+    /**
+     * 保存对象到JSON文件
+     */
+    public <T> boolean saveData(String fileName, T data) {
+        try {
+            String json = gson.toJson(data);
+            FileOutputStream fos = context.openFileOutput(fileName, Context.MODE_PRIVATE);
+            fos.write(json.getBytes());
+            fos.close();
+            return true;
+        } catch (Exception e) {
+            Log.e("StorageManager", "保存数据失败: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * 从JSON文件加载对象
+     */
+    public <T> T loadData(String fileName, Type type, T defaultValue) {
+        try {
+            FileInputStream fis = context.openFileInput(fileName);
+            byte[] buffer = new byte[fis.available()];
+            fis.read(buffer);
+            fis.close();
+            
+            String json = new String(buffer);
+            return gson.fromJson(json, type);
+        } catch (Exception e) {
+            Log.w("StorageManager", "加载数据失败，使用默认值: " + e.getMessage());
+            return defaultValue;
+        }
+    }
+}
+```
+
+## 数据模型规范
+
+### 课程管理数据结构
+```json
+{
+  "courses": [
+    {
+      "courseId": "cs101_2024_spring",
+      "courseName": "Java程序设计",
+      "courseCode": "CS101",
+      "instructor": "张教授",
+      "credits": 3,
+      "classroom": "计算机楼101",
+      "semester": "2024-Spring",
+      "description": "Java编程基础课程",
+      "times": [
+        {
+          "dayOfWeek": "MONDAY",
+          "startTime": 800,
+          "endTime": 950,
+          "weekStart": 1,
+          "weekEnd": 16
+        },
+        {
+          "dayOfWeek": "WEDNESDAY", 
+          "startTime": 1400,
+          "endTime": 1550,
+          "weekStart": 1,
+          "weekEnd": 16
+        }
+      ],
+      "assignments": [
+        {
+          "assignmentId": "hw1_cs101",
+          "title": "第一次作业",
+          "description": "基础语法练习",
+          "dueDate": "2024-03-15",
+          "isCompleted": false
+        }
+      ],
+      "exams": [
+        {
+          "examId": "midterm_cs101",
+          "title": "期中考试",
+          "examDate": "2024-04-20",
+          "location": "A楼201",
+          "duration": 120
+        }
+      ]
+    }
+  ],
+  "grades": [
+    {
+      "gradeId": "grade_001",
+      "courseId": "cs101_2024_spring",
+      "assignmentName": "第一次作业",
+      "score": 85,
+      "totalScore": 100,
+      "type": "HOMEWORK",
+      "recordTime": "2024-03-16 10:30:00",
+      "feedback": "代码逻辑清晰，注释完整"
+    }
+  ]
+}
+```
+
+### 学习计划数据结构
+```json
+{
+  "studyPlans": [
+    {
+      "planId": "plan_exam_2024_spring",
+      "title": "2024春季期末复习计划",
+      "description": "针对期末考试的系统复习安排",
+      "type": "EXAM_PREP",
+      "startDate": "2024-05-01",
+      "endDate": "2024-06-15", 
+      "status": "ACTIVE",
+      "goals": [
+        {
+          "goalId": "goal_java_review",
+          "title": "Java课程复习",
+          "targetScore": 90,
+          "currentProgress": 45,
+          "priority": "HIGH"
+        }
+      ],
+      "tasks": [
+        {
+          "taskId": "task_001",
+          "planId": "plan_exam_2024_spring",
+          "title": "复习Java基础语法",
+          "description": "重新学习变量、循环、条件语句",
+          "priority": "HIGH",
+          "estimatedHours": 4,
+          "dueDate": "2024-05-05",
+          "status": "TODO",
+          "tags": ["Java", "基础", "语法"],
+          "relatedCourseId": "cs101_2024_spring"
+        }
+      ],
+      "statistics": {
+        "totalTasks": 20,
+        "completedTasks": 8,
+        "totalHours": 80,
+        "spentHours": 32,
+        "averageRating": 4.2
+      }
+    }
+  ]
+}
+```
+
+### AI对话数据结构
+```json
+{
+  "chatSessions": [
+    {
+      "sessionId": "session_20240601_001",
+      "title": "学习问题咨询",
+      "createTime": "2024-06-01 09:00:00",
+      "lastUpdateTime": "2024-06-01 09:30:00",
+      "messages": [
+        {
+          "messageId": "msg_001",
+          "content": "如何提高Java编程能力？",
+          "type": "USER",
+          "timestamp": "2024-06-01 09:00:00",
+          "status": "SENT"
+        },
+        {
+          "messageId": "msg_002", 
+          "content": "提高Java编程能力可以从以下几个方面入手：\n1. 多练习基础语法\n2. 学习设计模式\n3. 参与开源项目\n4. 阅读优秀代码",
+          "type": "AI",
+          "timestamp": "2024-06-01 09:00:15",
+          "status": "SENT",
+          "metadata": {
+            "model": "gpt-3.5-turbo",
+            "tokens": 125
+          }
+        }
+      ]
+    }
+  ],
+  "chatSettings": {
+    "maxHistoryMessages": 100,
+    "autoSave": true,
+    "aiModel": "gpt-3.5-turbo",
+    "responseTimeout": 30000
+  }
+}
+```
+
+### 校园信息数据结构
+```json
+{
+  "campusInfo": {
+    "categories": [
+      {
+        "categoryId": "dining",
+        "categoryName": "餐饮服务",
+        "iconResource": "ic_restaurant",
+        "description": "食堂、餐厅信息",
+        "infoCount": 15
+      },
+      {
+        "categoryId": "library", 
+        "categoryName": "图书馆",
+        "iconResource": "ic_library",
+        "description": "图书馆服务信息",
+        "infoCount": 8
+      }
+    ],
+    "infoList": [
+      {
+        "infoId": "dining_001",
+        "title": "第一食堂",
+        "content": "营业时间：7:00-21:00\n位置：学生公寓A区\n特色：川菜、粤菜、清真菜",
+        "categoryId": "dining",
+        "type": "DINING",
+        "imageUrl": "/images/dining1.jpg",
+        "contactInfo": "电话：010-12345678",
+        "location": "学生公寓A区1楼",
+        "isFavorite": true,
+        "updateTime": "2024-06-01 10:00:00",
+        "tags": ["食堂", "川菜", "清真"],
+        "rating": 4.5,
+        "openHours": {
+          "breakfast": "07:00-09:30",
+          "lunch": "11:30-13:30", 
+          "dinner": "17:30-20:00"
+        }
+      }
+    ]
+  },
+  "favorites": [
+    "dining_001",
+    "library_001"
+  ]
+}
+```
+
+## Repository模式实现
+
+### 数据仓库接口定义
+```java
+public interface DataRepository {
+    // 课程数据操作
+    List<Course> getAllCourses();
+    Course getCourseById(String courseId);
+    boolean saveCourse(Course course);
+    boolean deleteCourse(String courseId);
+    List<Grade> getGradesByCourse(String courseId);
+    
+    // 学习计划操作
+    List<StudyPlan> getAllStudyPlans();
+    StudyPlan getStudyPlanById(String planId);
+    boolean saveStudyPlan(StudyPlan plan);
+    boolean deleteStudyPlan(String planId);
+    List<Task> getTasksByPlan(String planId);
+    
+    // 聊天记录操作
+    List<ChatSession> getAllChatSessions();
+    ChatSession getChatSessionById(String sessionId);
+    boolean saveChatSession(ChatSession session);
+    boolean saveMessage(Message message);
+    
+    // 校园信息操作
+    List<InfoCategory> getInfoCategories();
+    List<CampusInfo> getInfoByCategory(String categoryId);
+    List<CampusInfo> searchInfo(String keyword);
+    List<CampusInfo> getFavoriteInfo();
+    boolean toggleFavorite(String infoId);
+}
+```
+
+### 数据仓库实现
+```java
+public class LocalDataRepository implements DataRepository {
+    private static final String COURSES_FILE = "courses.json";
+    private static final String PLANS_FILE = "study_plans.json";
+    private static final String CHAT_FILE = "chat_sessions.json";
+    private static final String CAMPUS_INFO_FILE = "campus_info.json";
+    
+    private StorageManager storageManager;
+    private Gson gson;
+    
+    public LocalDataRepository(Context context) {
+        this.storageManager = new StorageManager(context);
+        this.gson = new Gson();
+    }
+    
+    @Override
+    public List<Course> getAllCourses() {
+        CourseData data = storageManager.loadData(
+            COURSES_FILE,
+            CourseData.class,
+            new CourseData()
+        );
+        return data.getCourses();
+    }
+    
+    @Override
+    public boolean saveCourse(Course course) {
+        List<Course> courses = getAllCourses();
+        
+        // 查找是否已存在
+        for (int i = 0; i < courses.size(); i++) {
+            if (courses.get(i).getCourseId().equals(course.getCourseId())) {
+                courses.set(i, course);
+                return saveCoursesData(courses);
+            }
+        }
+        
+        // 添加新课程
+        courses.add(course);
+        return saveCoursesData(courses);
+    }
+    
+    private boolean saveCoursesData(List<Course> courses) {
+        CourseData data = new CourseData();
+        data.setCourses(courses);
+        return storageManager.saveData(COURSES_FILE, data);
+    }
+}
+```
+
+## 数据同步和备份
+
+### 数据导出功能
+```java
+public class DataExporter {
+    
+    /**
+     * 导出所有数据到外部存储
+     */
+    public boolean exportAllData(Context context) {
+        try {
+            File exportDir = new File(context.getExternalFilesDir(null), "backup");
+            if (!exportDir.exists()) {
+                exportDir.mkdirs();
+            }
+            
+            // 导出各模块数据
+            exportCourseData(context, exportDir);
+            exportPlanData(context, exportDir);
+            exportChatData(context, exportDir);
+            exportCampusData(context, exportDir);
+            
+            return true;
+        } catch (Exception e) {
+            Log.e("DataExporter", "导出失败: " + e.getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * 从备份恢复数据
+     */
+    public boolean importAllData(Context context, File backupDir) {
+        try {
+            // 验证备份文件
+            if (!validateBackupFiles(backupDir)) {
+                return false;
+            }
+            
+            // 恢复各模块数据
+            importCourseData(context, backupDir);
+            importPlanData(context, backupDir);
+            importChatData(context, backupDir);
+            importCampusData(context, backupDir);
+            
+            return true;
+        } catch (Exception e) {
+            Log.e("DataExporter", "导入失败: " + e.getMessage());
+            return false;
+        }
+    }
+}
+```
+
+### 数据缓存策略
+```java
+public class DataCache {
+    private static final int MAX_CACHE_SIZE = 50;
+    private static final long CACHE_EXPIRE_TIME = 30 * 60 * 1000; // 30分钟
+    
+    private LruCache<String, CacheItem> memoryCache;
+    
+    public DataCache() {
+        memoryCache = new LruCache<String, CacheItem>(MAX_CACHE_SIZE) {
+            @Override
+            protected int sizeOf(String key, CacheItem item) {
+                return item.getSize();
+            }
+        };
+    }
+    
+    public <T> void put(String key, T data) {
+        CacheItem item = new CacheItem(data, System.currentTimeMillis());
+        memoryCache.put(key, item);
+    }
+    
+    public <T> T get(String key, Class<T> clazz) {
+        CacheItem item = memoryCache.get(key);
+        if (item != null && !item.isExpired()) {
+            return clazz.cast(item.getData());
+        }
+        return null;
+    }
+}
+```
+
+参考相关规则文件：
+- [coding-standards.mdc](mdc:coding-standards.mdc) - 代码开发规范
+- [feature-modules.mdc](mdc:feature-modules.mdc) - 功能模块设计

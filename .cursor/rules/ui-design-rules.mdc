@@ -1,0 +1,286 @@
+---
+description: develop UI module
+globs: 
+alwaysApply: false
+---
+# 校园AI智能助手 - UI设计规范
+
+## Material Design 设计规范
+
+### 核心设计原则
+- **Material主题**: 使用Google Material Design Components
+- **颜色系统**: 遵循Material Color System
+- **字体规范**: Roboto字体系统
+- **图标风格**: Material Icons统一图标库
+
+### 设计主题配置
+```xml
+<!-- res/values/themes.xml -->
+<resources>
+    <style name="Theme.CampusAssistant" parent="Theme.Material3.DayNight">
+        <!-- Primary brand color -->
+        <item name="colorPrimary">@color/primary_500</item>
+        <item name="colorPrimaryVariant">@color/primary_700</item>
+        <item name="colorOnPrimary">@color/white</item>
+        
+        <!-- Secondary brand color -->
+        <item name="colorSecondary">@color/secondary_500</item>
+        <item name="colorSecondaryVariant">@color/secondary_700</item>
+        <item name="colorOnSecondary">@color/black</item>
+        
+        <!-- Status bar color -->
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+    </style>
+</resources>
+```
+
+### 颜色规范
+```xml
+<!-- res/values/colors.xml -->
+<resources>
+    <!-- Primary Colors - 校园蓝色系 -->
+    <color name="primary_50">#E3F2FD</color>
+    <color name="primary_100">#BBDEFB</color>
+    <color name="primary_500">#2196F3</color>
+    <color name="primary_700">#1976D2</color>
+    <color name="primary_900">#0D47A1</color>
+    
+    <!-- Secondary Colors - 智能绿色系 -->
+    <color name="secondary_50">#E8F5E8</color>
+    <color name="secondary_500">#4CAF50</color>
+    <color name="secondary_700">#388E3C</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
+    <color name="text_hint">#BDBDBD</color>
+</resources>
+```
+
+## 布局设计规范
+
+### 响应式布局原则
+- **主要布局**: ConstraintLayout优先，提供灵活性
+- **线性布局**: 简单排列使用LinearLayout
+- **卡片设计**: 使用CardView展示信息块
+- **列表布局**: RecyclerView替代ListView
+
+### 间距规范
+```xml
+<!-- res/values/dimens.xml -->
+<resources>
+    <!-- 标准间距 -->
+    <dimen name="spacing_xs">4dp</dimen>
+    <dimen name="spacing_small">8dp</dimen>
+    <dimen name="spacing_medium">16dp</dimen>
+    <dimen name="spacing_large">24dp</dimen>
+    <dimen name="spacing_xl">32dp</dimen>
+    
+    <!-- 卡片设计 -->
+    <dimen name="card_margin">16dp</dimen>
+    <dimen name="card_padding">16dp</dimen>
+    <dimen name="card_elevation">4dp</dimen>
+    <dimen name="card_corner_radius">8dp</dimen>
+</resources>
+```
+
+### 标准布局模板
+```xml
+<!-- 主页面布局模板 -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="@dimen/spacing_medium">
+    
+    <!-- 顶部标题栏 -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        app:layout_constraintTop_toTopOf="parent" />
+    
+    <!-- 主要内容区域 -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/toolbar"
+        app:layout_constraintBottom_toBottomOf="parent">
+        
+        <!-- 内容布局 -->
+        
+    </ScrollView>
+    
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+## 组件设计规范
+
+### 卡片组件设计
+```xml
+<!-- 标准信息卡片 -->
+<com.google.android.material.card.MaterialCardView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/card_margin"
+    app:cardElevation="@dimen/card_elevation"
+    app:cardCornerRadius="@dimen/card_corner_radius">
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/card_padding">
+        
+        <!-- 卡片标题 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAppearance="?attr/textAppearanceHeadline6"
+            android:textColor="@color/text_primary" />
+        
+        <!-- 卡片内容 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/spacing_small"
+            android:textAppearance="?attr/textAppearanceBody2"
+            android:textColor="@color/text_secondary" />
+        
+    </LinearLayout>
+    
+</com.google.android.material.card.MaterialCardView>
+```
+
+### 按钮设计规范
+```xml
+<!-- 主要操作按钮 -->
+<com.google.android.material.button.MaterialButton
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:text="@string/button_text"
+    style="@style/Widget.Material3.Button" />
+
+<!-- 次要操作按钮 -->
+<com.google.android.material.button.MaterialButton
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="@string/button_text"
+    style="@style/Widget.Material3.Button.TextButton" />
+
+<!-- 浮动操作按钮 -->
+<com.google.android.material.floatingactionbutton.FloatingActionButton
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:src="@drawable/ic_add"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    android:layout_margin="@dimen/spacing_medium" />
+```
+
+### 输入框设计
+```xml
+<!-- Material Design 输入框 -->
+<com.google.android.material.textfield.TextInputLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:hint="@string/hint_text"
+    style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+    
+    <com.google.android.material.textfield.TextInputEditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text" />
+        
+</com.google.android.material.textfield.TextInputLayout>
+```
+
+## 页面设计规范
+
+### 导航设计
+- **底部导航**: 使用BottomNavigationView，最多5个主要功能
+- **侧边导航**: 可选的DrawerLayout，用于次要功能
+- **页面跳转**: Fragment切换 + ViewPager2
+
+### 底部导航实现
+```xml
+<com.google.android.material.bottomnavigation.BottomNavigationView
+    android:id="@+id/bottom_navigation"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:menu="@menu/bottom_navigation"
+    app:layout_constraintBottom_toBottomOf="parent" />
+```
+
+```xml
+<!-- res/menu/bottom_navigation.xml -->
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_chat"
+        android:icon="@drawable/ic_chat"
+        android:title="@string/nav_chat" />
+    <item
+        android:id="@+id/nav_course"
+        android:icon="@drawable/ic_course"
+        android:title="@string/nav_course" />
+    <item
+        android:id="@+id/nav_plan"
+        android:icon="@drawable/ic_plan"
+        android:title="@string/nav_plan" />
+    <item
+        android:id="@+id/nav_campus"
+        android:icon="@drawable/ic_campus"
+        android:title="@string/nav_campus" />
+</menu>
+```
+
+## 交互设计规范
+
+### 反馈机制
+- **加载状态**: 使用ProgressBar或Skeleton Screen
+- **操作反馈**: Toast、Snackbar提示用户
+- **状态指示**: 不同颜色和图标表示状态
+
+### 动画效果
+```xml
+<!-- 页面切换动画 -->
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+    <translate
+        android:duration="300"
+        android:fromXDelta="100%"
+        android:toXDelta="0%" />
+    <alpha
+        android:duration="300"
+        android:fromAlpha="0.0"
+        android:toAlpha="1.0" />
+</set>
+```
+
+### 触摸反馈
+```xml
+<!-- 可点击元素的波纹效果 -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorPrimary">
+    <item android:drawable="@drawable/background_default" />
+</ripple>
+```
+
+## 无障碍设计
+
+### 无障碍属性
+```xml
+<Button
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="@string/button_text"
+    android:contentDescription="@string/button_description"
+    android:focusable="true" />
+```
+
+### 最小触摸目标
+- 按钮最小尺寸: 48dp x 48dp
+- 文本最小字号: 14sp
+- 对比度符合WCAG AA标准
+
+参考相关规则文件：
+- [project-overview.mdc](mdc:project-overview.mdc) - 项目总体规则
+- [feature-modules.mdc](mdc:feature-modules.mdc) - 功能模块设计
