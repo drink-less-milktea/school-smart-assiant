@@ -1,0 +1,209 @@
+---
+description: write or fix code
+globs: 
+alwaysApply: false
+---
+# 校园AI智能助手 - 代码开发规范
+
+## 技术栈规范
+
+### 核心开发环境
+| 技术组件 | 选择 | 版本要求 | 选择理由 |
+|---------|------|----------|----------|
+| **开发IDE** | Android Studio | Latest Stable (2024.x) | Google官方IDE，功能完善 |
+| **开发语言** | Java/Kotlin | Java 8+ / Kotlin 1.9+ | 学校课程要求，易学易用 |
+| **构建工具** | Gradle | 8.0+ | Android官方构建系统 |
+| **最低API** | Android 7.0 (API 24) | API 24+ | 覆盖90%+设备，功能丰富 |
+| **目标API** | Android 14 (API 34) | API 34 | 最新稳定版本 |
+
+### 核心技术选择
+- **架构模式**: MVP (Model-View-Presenter)
+- **依赖注入**: 简单工厂模式（避免复杂DI框架）
+- **异步处理**: AsyncTask/Handler
+- **数据绑定**: 传统findViewById（不使用Data Binding）
+
+## MVP架构实现规范
+
+### 接口定义标准
+```java
+// Contract接口模式：将View、Presenter接口统一管理
+public interface ChatContract {
+    interface View extends BaseView {
+        void displayMessage(String message);
+        void showTyping();
+        void hideTyping();
+        void clearInput();
+    }
+    
+    interface Presenter extends BasePresenter<View> {
+        void sendMessage(String message);
+        void loadChatHistory();
+    }
+}
+```
+
+### Base接口定义
+```java
+interface BaseView {
+    void showLoading();
+    void hideLoading();
+    void showError(String message);
+}
+
+interface BasePresenter<T : BaseView> {
+    void attachView(T view);
+    void detachView();
+}
+```
+
+### View层实现规范
+```java
+public class ChatActivity extends AppCompatActivity implements ChatContract.View {
+    private ChatContract.Presenter presenter;
+    
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_chat);
+        
+        initViews();
+        presenter = new ChatPresenter();
+        presenter.attachView(this);
+    }
+    
+    @Override
+    protected void onDestroy() {
+        if (presenter != null) {
+            presenter.detachView();
+        }
+        super.onDestroy();
+    }
+}
+```
+
+### Presenter层实现规范
+```java
+public class ChatPresenter implements ChatContract.Presenter {
+    private ChatContract.View view;
+    private ChatRepository repository;
+    
+    @Override
+    public void attachView(ChatContract.View view) {
+        this.view = view;
+    }
+    
+    @Override
+    public void sendMessage(String message) {
+        if (view != null) {
+            view.showLoading();
+        }
+        
+        // 异步处理业务逻辑
+        new AsyncTask<Void, Void, String>() {
+            @Override
+            protected String doInBackground(Void... voids) {
+                return repository.sendMessageToAI(message);
+            }
+            
+            @Override
+            protected void onPostExecute(String response) {
+                if (view != null) {
+                    view.hideLoading();
+                    view.displayMessage(response);
+                }
+            }
+        }.execute();
+    }
+}
+```
+
+## 代码编写规范
+
+### 命名规范
+- **类名**: 使用大驼峰命名法 (PascalCase)
+- **方法名**: 使用小驼峰命名法 (camelCase)
+- **常量**: 使用全大写，下划线分隔 (CONSTANT_CASE)
+- **变量**: 使用小驼峰命名法，有意义的名称
+
+### 注释规范
+```java
+/**
+ * 课程管理器
+ * 负责课程数据的增删改查操作
+ * 
+ * @author Your Name
+ * @version 1.0
+ * @since 2024-06-01
+ */
+public class CourseManager {
+    
+    /**
+     * 添加新课程
+     * 
+     * @param course 要添加的课程对象
+     * @return 添加成功返回true，否则返回false
+     * @throws IllegalArgumentException 当课程信息不完整时抛出
+     */
+    public boolean addCourse(Course course) {
+        // 实现代码
+    }
+}
+```
+
+### 代码组织规范
+```
+app/
+├── src/main/java/com/campus/assistant/
+│   ├── ui/                     # UI层
+│   │   ├── chat/              # 聊天模块
+│   │   ├── course/            # 课程模块
+│   │   └── plan/              # 计划模块
+│   ├── presenter/             # Presenter层
+│   ├── model/                 # Model层
+│   │   ├── entity/            # 数据实体
+│   │   ├── repository/        # 数据仓库
+│   │   └── datasource/        # 数据源
+│   ├── utils/                 # 工具类
+│   └── common/                # 公共组件
+```
+
+### 异常处理规范
+```java
+public class NetworkUtils {
+    
+    public String makeHttpRequest(String url) {
+        try {
+            // 网络请求代码
+            return response;
+        } catch (IOException e) {
+            Log.e("NetworkUtils", "网络请求失败: " + e.getMessage());
+            return null;
+        } catch (Exception e) {
+            Log.e("NetworkUtils", "未知错误: " + e.getMessage());
+            return null;
+        }
+    }
+}
+```
+
+## 性能优化规范
+
+### 内存管理
+- 避免内存泄漏，及时释放资源
+- 使用弱引用避免Activity泄漏
+- 合理使用静态变量
+
+### UI性能
+- 避免在主线程进行耗时操作
+- 使用ViewHolder模式优化ListView/RecyclerView
+- 合理使用图片缓存
+
+### 网络优化
+- 实现请求缓存机制
+- 避免频繁网络请求
+- 处理网络异常情况
+
+参考相关规则文件：
+- [project-overview.mdc](mdc:project-overview.mdc) - 项目总体规则
+- [data-storage-rules.mdc](mdc:data-storage-rules.mdc) - 数据存储规范
+- [testing-quality.mdc](mdc:testing-quality.mdc) - 测试质量规范

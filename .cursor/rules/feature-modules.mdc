@@ -1,0 +1,469 @@
+---
+description: develop feature module
+globs: 
+alwaysApply: false
+---
+# 校园AI智能助手 - 功能模块规范
+
+## 模块总览
+
+四大核心功能模块：
+1. **AI对话助手模块** 🤖 - 智能对话交互
+2. **课程管理模块** 📚 - 课程信息管理
+3. **学习计划模块** 📝 - 个性化学习规划
+4. **校园信息查询模块** 🏫 - 校园服务信息
+
+## AI对话助手模块
+
+### 功能设计
+- 自然语言理解和回答
+- 多轮对话上下文保持
+- 学术问题智能解答
+- 聊天历史记录管理
+
+### 接口定义
+```java
+public interface ChatContract {
+    interface View extends BaseView {
+        void displayMessage(Message message);
+        void showTypingIndicator();
+        void hideTypingIndicator();
+        void scrollToBottom();
+        void clearInputField();
+        void showChatHistory(List<Message> messages);
+    }
+    
+    interface Presenter extends BasePresenter<View> {
+        void sendMessage(String content);
+        void loadChatHistory();
+        void clearChatHistory();
+        void retryLastMessage();
+    }
+}
+```
+
+### 数据模型
+```java
+public class Message {
+    private String messageId;
+    private String content;
+    private MessageType type;
+    private long timestamp;
+    private MessageStatus status;
+    
+    public enum MessageType {
+        USER, AI, SYSTEM
+    }
+    
+    public enum MessageStatus {
+        SENDING, SENT, FAILED
+    }
+}
+
+public class ChatSession {
+    private String sessionId;
+    private List<Message> messages;
+    private long createTime;
+    private long lastUpdateTime;
+}
+```
+
+### UI设计规范
+```xml
+<!-- fragment_chat.xml -->
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    
+    <!-- 聊天记录 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_chat"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="@dimen/spacing_medium" />
+    
+    <!-- 输入区域 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="@dimen/spacing_medium">
+        
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_message"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="@string/hint_message" />
+        
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_send"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/send" />
+    </LinearLayout>
+    
+</LinearLayout>
+```
+
+## 课程管理模块
+
+### 功能设计
+- 课程信息录入和编辑
+- 课程表可视化展示
+- 作业和考试提醒
+- 成绩记录和统计
+
+### 接口定义
+```java
+public interface CourseContract {
+    interface View extends BaseView {
+        void showCourseList(List<Course> courses);
+        void showCourseDetail(Course course);
+        void showScheduleView(List<Course> courses);
+        void showGradeStatistics(GradeStatistics stats);
+        void navigateToAddCourse();
+        void showDeleteConfirmation(Course course);
+    }
+    
+    interface Presenter extends BasePresenter<View> {
+        void loadCourses();
+        void addCourse(Course course);
+        void updateCourse(Course course);
+        void deleteCourse(String courseId);
+        void loadSchedule();
+        void calculateGradeStatistics();
+    }
+}
+```
+
+### 数据模型
+```java
+public class Course {
+    private String courseId;
+    private String courseName;
+    private String courseCode;
+    private String instructor;
+    private int credits;
+    private String classroom;
+    private String semester;
+    private List<CourseTime> times;
+    private List<Grade> grades;
+}
+
+public class CourseTime {
+    private DayOfWeek dayOfWeek;
+    private int startTime;      // 24小时格式，如800表示8:00
+    private int endTime;
+    private int weekStart;      // 开始周次
+    private int weekEnd;        // 结束周次
+}
+
+public class Grade {
+    private String gradeId;
+    private String courseId;
+    private String assignmentName;
+    private double score;
+    private double totalScore;
+    private GradeType type;
+    private long recordTime;
+    
+    public enum GradeType {
+        HOMEWORK, QUIZ, MIDTERM, FINAL, PROJECT
+    }
+}
+```
+
+### 课程表布局
+```xml
+<!-- fragment_course_schedule.xml -->
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    
+    <!-- 学期选择器 -->
+    <Spinner
+        android:id="@+id/spinner_semester"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/spacing_medium" />
+    
+    <!-- 课程表格 -->
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        
+        <TableLayout
+            android:id="@+id/table_schedule"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent">
+            <!-- 动态生成课程表格 -->
+        </TableLayout>
+        
+    </HorizontalScrollView>
+    
+</LinearLayout>
+```
+
+## 学习计划模块
+
+### 功能设计
+- 个性化学习计划制定
+- 学习进度跟踪和可视化
+- 目标设定和达成监控
+- 学习效率分析和建议
+
+### 接口定义
+```java
+public interface StudyPlanContract {
+    interface View extends BaseView {
+        void showPlanList(List<StudyPlan> plans);
+        void showPlanDetail(StudyPlan plan);
+        void showProgressChart(ProgressData data);
+        void showGoalStatistics(GoalStatistics stats);
+        void showTaskReminder(Task task);
+        void showEfficiencyReport(EfficiencyReport report);
+    }
+    
+    interface Presenter extends BasePresenter<View> {
+        void loadStudyPlans();
+        void createPlan(StudyPlan plan);
+        void updatePlan(StudyPlan plan);
+        void deletePlan(String planId);
+        void completeTask(String taskId);
+        void generateProgressReport();
+    }
+}
+```
+
+### 数据模型
+```java
+public class StudyPlan {
+    private String planId;
+    private String title;
+    private String description;
+    private PlanType type;
+    private Date startDate;
+    private Date endDate;
+    private List<Goal> goals;
+    private List<Task> tasks;
+    private PlanStatus status;
+    
+    public enum PlanType {
+        DAILY, WEEKLY, MONTHLY, EXAM_PREP, PROJECT
+    }
+    
+    public enum PlanStatus {
+        ACTIVE, COMPLETED, PAUSED, CANCELLED
+    }
+}
+
+public class Task {
+    private String taskId;
+    private String planId;
+    private String title;
+    private String description;
+    private TaskPriority priority;
+    private int estimatedHours;
+    private Date dueDate;
+    private TaskStatus status;
+    private Date completedTime;
+    
+    public enum TaskPriority {
+        LOW, MEDIUM, HIGH, URGENT
+    }
+    
+    public enum TaskStatus {
+        TODO, IN_PROGRESS, COMPLETED, CANCELLED
+    }
+}
+```
+
+### 计划概览界面
+```xml
+<!-- fragment_study_plan.xml -->
+<ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/spacing_medium">
+        
+        <!-- 进度概览卡片 -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing_medium">
+            
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="@dimen/card_padding">
+                
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/progress_overview"
+                    android:textAppearance="?attr/textAppearanceHeadline6" />
+                
+                <!-- 进度条和统计信息 -->
+                <ProgressBar
+                    android:id="@+id/progress_overall"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/spacing_small" />
+                
+            </LinearLayout>
+            
+        </com.google.android.material.card.MaterialCardView>
+        
+        <!-- 任务列表 -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_tasks"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+        
+    </LinearLayout>
+    
+</ScrollView>
+```
+
+## 校园信息查询模块
+
+### 功能设计
+- 校园服务信息整合
+- 快速搜索和筛选
+- 常用信息收藏
+- 信息分类管理
+
+### 接口定义
+```java
+public interface CampusInfoContract {
+    interface View extends BaseView {
+        void showInfoCategories(List<InfoCategory> categories);
+        void showInfoList(List<CampusInfo> infoList);
+        void showInfoDetail(CampusInfo info);
+        void showSearchResults(List<CampusInfo> results);
+        void showFavoritesList(List<CampusInfo> favorites);
+    }
+    
+    interface Presenter extends BasePresenter<View> {
+        void loadInfoCategories();
+        void loadInfoByCategory(String categoryId);
+        void searchInfo(String keyword);
+        void addToFavorites(String infoId);
+        void removeFromFavorites(String infoId);
+        void loadFavorites();
+    }
+}
+```
+
+### 数据模型
+```java
+public class CampusInfo {
+    private String infoId;
+    private String title;
+    private String content;
+    private String categoryId;
+    private InfoType type;
+    private String imageUrl;
+    private String contactInfo;
+    private String location;
+    private boolean isFavorite;
+    private long updateTime;
+    
+    public enum InfoType {
+        SERVICE, FACILITY, ACTIVITY, NOTICE, DINING, LIBRARY
+    }
+}
+
+public class InfoCategory {
+    private String categoryId;
+    private String categoryName;
+    private String iconResource;
+    private String description;
+    private int infoCount;
+}
+```
+
+### 信息查询界面
+```xml
+<!-- fragment_campus_info.xml -->
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+    
+    <!-- 搜索栏 -->
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/spacing_medium"
+        style="@style/Widget.Material3.TextInputLayout.OutlinedBox">
+        
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_search"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_search_campus"
+            android:inputType="text" />
+            
+    </com.google.android.material.textfield.TextInputLayout>
+    
+    <!-- 分类网格 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_categories"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/spacing_medium" />
+    
+    <!-- 信息列表 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_info_list"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+    
+</LinearLayout>
+```
+
+## 模块间协同设计
+
+### 数据共享机制
+- AI助手可查询课程和计划信息
+- 课程管理支持自动生成学习计划
+- 校园信息可关联到学习和生活场景
+
+### 统一数据接口
+```java
+public interface DataRepository {
+    // 课程数据
+    List<Course> getAllCourses();
+    Course getCourseById(String courseId);
+    
+    // 计划数据
+    List<StudyPlan> getAllPlans();
+    StudyPlan getPlanById(String planId);
+    
+    // 校园信息
+    List<CampusInfo> getInfoByCategory(String categoryId);
+    List<CampusInfo> searchInfo(String keyword);
+    
+    // 聊天记录
+    List<Message> getChatHistory();
+    void saveMessage(Message message);
+}
+```
+
+参考相关规则文件：
+- [coding-standards.mdc](mdc:coding-standards.mdc) - 代码开发规范
+- [data-storage-rules.mdc](mdc:data-storage-rules.mdc) - 数据存储规范
+- [ui-design-rules.mdc](mdc:ui-design-rules.mdc) - UI设计规范
